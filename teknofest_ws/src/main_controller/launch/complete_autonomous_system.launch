@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<!--
+TEKNOFEST 2025 - COMPLETE AUTONOMOUS SYSTEM LAUNCH
+================================================
+
+Bu launch dosyası tüm ROS wrapper sistemlerini koordineli şekilde başlatır.
+5 major system + SLAM + mevcut controller sistemleri.
+
+Systems:
+1. SLAM & Navigation (mrpt_slam + move_base)
+2. Sensor Fusion System (Kalman Filter + Multi-sensor)
+3. Safety Monitor System (10 rules + Emergency stop)  
+4. Recovery Automation System (7 recovery plans)
+5. Sensor Validation System (Cross-validation + Outlier detection)
+6. Predictive Obstacle Avoidance (Trajectory prediction + Dynamic planning)
+7. Adaptive Controller (4 stages + Parameter optimization)
+
+Author: TEKNOFEST Takımı
+Date: 30 Ağustos 2025
+-->
+
+<launch>
+    <!-- ============ PARAMETERS ============ -->
+    <!-- Robot configuration -->
+    <param name="robot_name" value="teknofest_robot"/>
+    <param name="robot_description" value="TEKNOFEST 2025 Autonomous Robot"/>
+    
+    <!-- System configuration -->
+    <param name="enable_safety_monitor" value="true"/>
+    <param name="enable_recovery_system" value="true"/> 
+    <param name="enable_sensor_validation" value="true"/>
+    <param name="enable_obstacle_avoidance" value="true"/>
+    <param name="enable_adaptive_controller" value="true"/>
+    
+    <!-- Safety parameters -->
+    <param name="emergency_stop_enabled" value="true"/>
+    <param name="max_safe_velocity" value="1.0"/>
+    <param name="min_obstacle_distance" value="0.3"/>
+    
+    <!-- ============ SLAM & NAVIGATION SYSTEM ============ -->
+    <!-- MRPT SLAM from my_robot package -->
+    <include file="$(find my_robot)/launch/rbpf_slam.launch">
+        <arg name="use_sim_time" value="false"/>
+        <arg name="publish_tf" value="true"/>
+    </include>
+    
+    <!-- Move Base Navigation -->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+        <!-- Move base configuration would go here -->
+        <!-- For now, using default parameters -->
+    </node>
+    
+    <!-- ============ CORE AUTONOMOUS SYSTEMS ============ -->
+    
+    <!-- 1. SENSOR FUSION SYSTEM -->
+    <node pkg="main_controller" type="sensor_fusion_ros_node.py" 
+          name="sensor_fusion_node" output="screen" respawn="true">
+        <remap from="/scan" to="/scan"/>
+        <remap from="/imu/data" to="/imu/data"/>  
+        <remap from="/odom" to="/odom"/>
+        <!-- Sensor fusion parameters -->
+        <param name="fusion_rate" value="10.0"/>
+        <param name="kalman_process_noise" value="0.01"/>
+        <param name="kalman_measurement_noise" value="0.1"/>
+    </node>
+    
+    <!-- 2. SAFETY MONITOR SYSTEM -->
+    <node pkg="main_controller" type="safety_monitor_ros_node.py" 
+          name="safety_monitor_node" output="screen" respawn="true"
+          if="$(arg enable_safety_monitor)">
+        <remap from="/scan" to="/scan"/>
+        <remap from="/imu/data" to="/imu/data"/>
+        <remap from="/odom" to="/odom"/>
+        <remap from="/cmd_vel" to="/cmd_vel"/>
+        <!-- Safety monitor parameters -->
+        <param name="monitor_rate" value="20.0"/>
+        <param name="safety_rules_count" value="10"/>
+        <param name="emergency_stop_threshold" value="4"/>
+    </node>
+    
+    <!-- 3. RECOVERY AUTOMATION SYSTEM -->
+    <node pkg="main_controller" type="recovery_automation_ros_node.py" 
+          name="recovery_automation_node" output="screen" respawn="true"
+          if="$(arg enable_recovery_system)">
+        <remap from="/safety_monitor/status" to="/safety_monitor/status"/>
+        <remap from="/move_base/status" to="/move_base/status"/>
+        <remap from="/diagnostics" to="/diagnostics"/>
+        <!-- Recovery system parameters -->
+        <param name="recovery_timeout" value="30.0"/>
+        <param name="recovery_plans_count" value="7"/>
+        <param name="auto_recovery_enabled" value="true"/>
+    </node>
+    
+    <!-- 4. SENSOR VALIDATION SYSTEM -->
+    <node pkg="main_controller" type="sensor_validation_ros_node.py" 
+          name="sensor_validation_node" output="screen" respawn="true"
+          if="$(arg enable_sensor_validation)">
+        <remap from="/scan" to="/scan"/>
+        <remap from="/imu/data" to="/imu/data"/>
+        <remap from="/odom" to="/odom"/>
+        <!-- Sensor validation parameters -->
+        <param name="validation_rate" value="10.0"/>
+        <param name="validation_rules_count" value="6"/>
+        <param name="outlier_threshold" value="3.0"/>
+        <param name="validation_accuracy_target" value="0.99"/>
+    </node>
+    
+    <!-- 5. PREDICTIVE OBSTACLE AVOIDANCE -->
+    <node pkg="main_controller" type="obstacle_avoidance_ros_node.py" 
+          name="obstacle_avoidance_node" output="screen" respawn="true"
+          if="$(arg enable_obstacle_avoidance)">
+        <remap from="/scan" to="/scan"/>
+        <remap from="/odom" to="/odom"/>
+        <remap from="/move_base_simple/goal" to="/move_base_simple/goal"/>
+        <remap from="/cmd_vel" to="/cmd_vel"/>
+        <!-- Obstacle avoidance parameters -->
+        <param name="avoidance_rate" value="20.0"/>
+        <param name="prediction_horizon" value="3.0"/>
+        <param name="collision_threshold" value="0.3"/>
+        <param name="avoidance_gain" value="1.0"/>
+    </node>
+    
+    <!-- 6. ADAPTIVE CONTROLLER SYSTEM -->
+    <node pkg="main_controller" type="adaptive_controller_ros_node.py" 
+          name="adaptive_controller_node" output="screen" respawn="true"
+          if="$(arg enable_adaptive_controller)">
+        <remap from="/robot_pose" to="/robot_pose"/>
+        <remap from="/odom" to="/odom"/>
+        <remap from="/scan" to="/scan"/>
+        <remap from="/move_base/status" to="/move_base/status"/>
+        <!-- Adaptive controller parameters -->
+        <param name="adaptation_rate" value="5.0"/>
+        <param name="stages_count" value="4"/>
+        <param name="auto_stage_transition" value="true"/>
+        <param name="optimization_enabled" value="true"/>
+    </node>
+    
+    <!-- ============ COORDINATION & INTEGRATION ============ -->
+    
+    <!-- System Coordinator (Optional - could be developed) -->
+    <!-- This would coordinate between all systems -->
+    <!-- <node pkg="main_controller" type="system_coordinator.py" 
+          name="system_coordinator" output="screen" respawn="true">
+    </node> -->
+    
+    <!-- ============ DIAGNOSTICS & MONITORING ============ -->
+    
+    <!-- Robot State Publisher -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+    
+    <!-- Diagnostic Aggregator -->
+    <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator">
+        <rosparam command="load" file="$(find main_controller)/config/diagnostics.yaml" />
+    </node>
+    
+    <!-- RQT Robot Monitor (for debugging) -->
+    <!-- <node pkg="rqt_robot_monitor" type="rqt_robot_monitor" name="rqt_robot_monitor" 
+          if="$(arg debug_mode)"/> -->
+    
+    <!-- ============ VISUALIZATION ============ -->
+    
+    <!-- RViz for visualization -->
+    <node name="rviz" pkg="rviz" type="rviz" 
+          args="-d $(find my_robot)/rviz/rviz_conf.rviz" 
+          if="$(arg enable_visualization)"/>
+    
+    <!-- ============ LOGGING & RECORDING ============ -->
+    
+    <!-- Rosbag recording for important topics -->
+    <node pkg="rosbag" type="record" name="teknofest_recorder"
+          args="-o /tmp/teknofest_log 
+                /safety_monitor/status 
+                /recovery/status 
+                /sensor_validation/status
+                /obstacle_avoidance/status 
+                /adaptive_controller/current_stage
+                /cmd_vel 
+                /scan 
+                /odom
+                /tf" 
+          if="$(arg enable_logging)"/>
+
+    <!-- ============ LAUNCH ARGUMENTS ============ -->
+    <arg name="enable_safety_monitor" default="true"/>
+    <arg name="enable_recovery_system" default="true"/>
+    <arg name="enable_sensor_validation" default="true"/>
+    <arg name="enable_obstacle_avoidance" default="true"/>
+    <arg name="enable_adaptive_controller" default="true"/>
+    <arg name="enable_visualization" default="true"/>
+    <arg name="enable_logging" default="false"/>
+    <arg name="debug_mode" default="false"/>
+
+</launch>

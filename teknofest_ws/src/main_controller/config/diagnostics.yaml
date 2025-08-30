@@ -1,0 +1,51 @@
+# TEKNOFEST 2025 - DIAGNOSTIC AGGREGATOR CONFIGURATION
+# ===================================================
+# 
+# Bu dosya, tüm sistem diagnostics'lerini organize eder.
+# ROS diagnostic_aggregator için configuration.
+
+analyzers:
+  # System Health Monitor
+  system_health:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: System Health
+    contains: ['sensor_validation', 'safety_monitor', 'recovery']
+    
+  # Navigation System
+  navigation:
+    type: diagnostic_aggregator/GenericAnalyzer  
+    path: Navigation
+    contains: ['move_base', 'slam', 'path_planning']
+    
+  # Sensor Systems
+  sensors:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: Sensors
+    contains: ['lidar', 'imu', 'odometry', 'camera']
+    
+  # Control Systems  
+  control:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: Control
+    contains: ['adaptive_controller', 'obstacle_avoidance', 'cmd_vel']
+    
+  # Safety Systems
+  safety:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: Safety
+    contains: ['emergency_stop', 'collision_avoidance', 'recovery_automation']
+    
+  # Communication
+  communication:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: Communication  
+    contains: ['ros_topics', 'network', 'timeout']
+    
+  # Hardware
+  hardware:
+    type: diagnostic_aggregator/GenericAnalyzer
+    path: Hardware
+    contains: ['battery', 'temperature', 'motors', 'sensors']
+    
+pub_rate: 1.0  # 1Hz diagnostic publishing
+base_path: 'TEKNOFEST Robot'
