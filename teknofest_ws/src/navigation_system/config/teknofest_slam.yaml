@@ -1,0 +1,164 @@
+# TEKNOFEST MRPT RBPF SLAM Configuration
+# my_robot/config/default.yaml'dan adapte edildi ve optimize edildi
+
+# ROS loop update frequency - TEKNOFEST için optimize
+update_loop_frequency: 15 # Hz (daha stabil performans için)
+
+# Map save configuration
+simplemap_save_folder: ~/teknofest_maps/
+auto_save_interval: 300 # 5 dakikada bir otomatik kayıt
+
+# Motion Model Configuration - TEKNOFEST araç boyutu için
+motion_model:
+  type: "thrun" # Parçacık filtresi için optimize
+  
+  gaussian_motion_model_options:
+    # TEKNOFEST araç boyutları için ayarlanmış noise parametreleri
+    a1: 0.06    # Rotasyonel hareket -> rotasyonel hata
+    a2: 0.09    # Translasyonel hareket -> rotasyonel hata  
+    a3: 0.03    # Translasyonel hareket -> translasyonel hata
+    a4: 0.13    # Rotasyonel hareket -> translasyonel hata
+    minStdXY:  0.02   # Minimum XY standart sapma (2cm)
+    minStdPHI: 0.03   # Minimum açısal standart sapma (≈ 1.7°)
+  
+  thrun_motion_model_options:
+    particle_count: 250        # Parçacık sayısı artırıldı (TEKNOFEST için)
+    alfa1_rot_rot: 0.18        # Dönme -> dönme hatası
+    alfa2_rot_trans: 0.14      # Dönme -> hareket hatası
+    alfa3_trans_trans: 0.09    # Hareket -> hareket hatası
+    alfa4_trans_rot: 0.17      # Hareket -> dönme hatası
+    additional_std_XY: 0.06    # Ek XY standart sapması (6cm)
+    additional_std_phi: 0.06   # Ek açısal standart sapma (≈ 3.4°)
+
+# MRPT Visualization options
+mrpt_visualization_options:
+  show_window: true           # Debugging için açık
+  camera_follow_robot: true   # Robot takibi
+  window_update_delay: 80     # [ms] - smooth görüntü
+  width: 1024                 # [pix] - büyük pencere
+  height: 768                 # [pix]
+  show_particles: true        # Parçacık görselleştirmesi
+  show_laser_scans: true      # LiDAR scan görselleştirmesi
+
+# Particle Filter Options - TEKNOFEST için optimize
+particle_filter_options:
+  adaptiveSampleSize: false   # Sabit parçacık sayısı
+  sampleSize: 250            # Parçacık sayısı (motion_model ile tutarlı)
+  pfAuxFilterOptimal_MaximumSearchSamples: 60
+  pfAuxFilterStandard_MaximumSearchSamples: 30
+  PF_algorithm: pfAuxiliaryPFStandard  # Standart algoritma
+  resampleThreshold: 0.5     # Resampling threshold
+  
+# Grid Map Options - TEKNOFEST parkuru için optimize
+occupancy_grid_options:
+  resolution: 0.04           # 4cm çözünürlük (yüksek hassasiyet)
+  size_x: 150.0             # 150m x 150m harita (büyük parkur)
+  size_y: 150.0
+  
+  insertionOpts:
+    maxDistanceInsertion: 30.0    # 30m maximum insertion distance
+    maxOccupancyUpdateCertainty: 0.65  # %65 certainty
+    considerInvalidRangesAsFreeSpace: true
+    decimation: 1              # Her scan noktası kullanılsın
+    
+    # Probability values
+    prob_hit: 0.85            # Hit probability
+    prob_miss: 0.45           # Miss probability  
+    prob_threshold_for_occupied: 0.70  # Occupied threshold
+    prob_threshold_for_free: 0.30      # Free threshold
+    
+    # Insertion filtering
+    CFD_features_gaussian_size: 2.0
+    CFD_features_median_size: 3.0
+    
+    # Wiring removal (indoor artifacts)
+    removeInvalidRange: true
+    invalidRangeValue: 0.0
+
+# Sensor-specific options
+lidar_options:
+  # YDLidar X4 Pro specifications
+  range_min: 0.12           # 12cm minimum range
+  range_max: 10.0           # 10m maximum reliable range
+  angle_min: -3.14159       # -180 degrees
+  angle_max: 3.14159        # +180 degrees
+  scan_frequency: 40.0      # 40Hz scan rate
+  
+  # Noise model
+  range_noise_std: 0.02     # 2cm range noise
+  angle_noise_std: 0.01     # 0.01 rad angle noise
+  
+  # Filtering
+  filter_by_range: true
+  filter_by_angle: false
+  median_filter_size: 3     # 3-point median filter
+
+# IMU integration options (eğer IMU varsa)
+imu_options:
+  use_imu: true
+  angular_velocity_noise_std: 0.02    # rad/s
+  linear_acceleration_noise_std: 0.1   # m/s²
+  gyro_bias_std: 0.001                # Gyro bias
+  accel_bias_std: 0.01                # Accelerometer bias
+  
+# Odometry integration options
+odometry_options:
+  use_odometry: true
+  odom_position_noise_std: 0.05       # 5cm position noise
+  odom_orientation_noise_std: 0.03    # 0.03 rad orientation noise
+  max_odometry_jump: 1.0              # 1m maximum jump detection
+  
+# Loop closure detection
+loop_closure_options:
+  enabled: true
+  min_distance_between_loop_closures: 5.0  # 5m minimum distance
+  loop_closure_threshold: 0.75             # Similarity threshold
+  max_distance_for_loop_closure: 10.0      # 10m max distance
+  
+# Advanced SLAM options
+advanced_options:
+  # Map update policies
+  update_map_every_n_poses: 5     # Her 5 pose'da bir map güncelle
+  minimum_map_update_distance: 0.2 # 20cm minimum hareket
+  minimum_map_update_angle: 0.1    # 0.1 rad minimum dönüş
+  
+  # Memory management
+  max_simplemap_size: 5000         # Maximum simplemap entry count
+  remove_old_poses_distance: 100.0 # 100m'den eski pose'ları sil
+  
+  # Performance tuning
+  parallel_processing: true        # Multi-threading
+  num_threads: 4                  # Thread count
+  
+# TEKNOFEST specific options
+teknofest_options:
+  # Mission-specific parameters
+  start_zone_size: 3.0            # 3m start zone radius
+  checkpoint_tolerance: 1.0       # 1m checkpoint tolerance  
+  obstacle_detection_range: 2.0   # 2m obstacle detection
+  sign_detection_range: 5.0       # 5m sign detection range
+  
+  # Safety parameters
+  emergency_stop_range: 0.5       # 50cm emergency stop
+  collision_threshold: 0.3        # 30cm collision threshold
+  max_slope_angle: 25.0          # 25° maximum slope
+  
+  # Navigation parameters
+  path_smoothing: true           # Path smoothing enabled
+  dynamic_window_size: 2.0       # 2m dynamic window
+  goal_tolerance_xy: 0.4         # 40cm XY goal tolerance
+  goal_tolerance_yaw: 0.2        # 0.2 rad yaw tolerance
+  
+# Debug and logging options
+debug_options:
+  save_debug_images: false       # Debug image saving
+  log_level: "INFO"             # Logging level
+  log_particle_filter: false    # PF detailed logging
+  log_map_building: true        # Map building logging
+  log_sensor_data: false        # Sensor data logging
+  
+  # Performance monitoring
+  monitor_cpu_usage: true       # CPU usage monitoring
+  monitor_memory_usage: true    # Memory usage monitoring
+  max_cpu_usage: 80.0          # Maximum CPU usage %
+  max_memory_usage: 2048       # Maximum memory usage MB

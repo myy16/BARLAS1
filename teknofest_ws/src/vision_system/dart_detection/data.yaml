@@ -1,0 +1,4 @@
+train: data_image/train
+val: data_image/test
+nc: 1
+names: ['dart']

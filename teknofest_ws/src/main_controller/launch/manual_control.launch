@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- TEKNOFEST Manuel Kontrol Launch Dosyası -->
+    <!-- 1. KOŞU: Manuel kontrol sistemi -->
+
+    <!-- Joystick Node (USB joystick varsa) -->
+    <node pkg="joy" type="joy_node" name="joy_node" output="screen">
+        <param name="dev" type="string" value="/dev/input/js0" />
+        <param name="deadzone" value="0.1" />
+        <param name="autorepeat_rate" value="20" />
+    </node>
+
+    <!-- Manuel Kontrol Sistemi -->
+    <node pkg="main_controller" type="manual_control.py" name="manual_control_system" output="screen">
+        <param name="arduino_port" value="COM3" />
+        <param name="arduino_baudrate" value="9600" />
+        <param name="control_mode" value="both" />
+        <!-- keyboard, joystick, both -->
+        <param name="debug_mode" value="true" />
+    </node>
+
+    <!-- Arduino Bridge Monitor (Opsiyonel status monitoring) -->
+    <node pkg="raspberry_bridge" type="arduino_status_monitor.py" name="arduino_monitor" output="screen" />
+
+    <!-- RQT için GUI araçları (Opsiyonel) -->
+    <group if="$(arg use_gui)">
+        <node pkg="rqt_gui" type="rqt_gui" name="rqt_control_panel" args="--perspective-file $(find main_controller)/config/manual_control.perspective" />
+    </group>
+
+    <!-- Static Transform Publishers (robot koordinat sistemi) -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_broadcaster" args="0 0 0 0 0 0 base_footprint base_link" />
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="laser_broadcaster" args="0.2 0 0.1 0 0 0 base_link laser_frame" />
+
+    <!-- Parametreler -->
+    <rosparam command="load" file="$(find main_controller)/config/manual_control_params.yaml" />
+
+    <!-- Launch argümanları -->
+    <arg name="use_gui" default="false" />
+    <arg name="debug" default="true" />
+    <arg name="simulation" default="false" />
+
+</launch>

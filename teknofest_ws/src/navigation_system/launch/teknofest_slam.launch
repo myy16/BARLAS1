@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!--
+TEKNOFEST MRPT RBPF SLAM Launch File
+my_robot'daki SLAM sistemini teknofest için adapte edildi
+-->
+
+<launch>
+    <!-- Environment configuration -->
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find teknofest_ws)/config/rosconsole.config"/>
+
+    <!-- SLAM Parameters -->
+    <arg name="scan_topic" default="/scan" />
+    <arg name="imu_topic" default="/imu/data" />
+    <arg name="odom_topic" default="/odom" />
+    <arg name="base_frame" default="base_link" />
+    <arg name="odom_frame" default="odom" />
+    <arg name="map_frame" default="map" />
+
+    <!-- Launch YDLidar driver (eğer hardware varsa) -->
+    <!-- <include file="$(find ydlidar_ros_driver)/launch/X4.launch" /> -->
+
+    <!-- Static transform publisher (LiDAR mount) -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="lidar_tf" args="0.15 0 0.08 3.14159 0 0 $(arg base_frame) laser" />
+
+    <!-- IMU static transform (eğer varsa) -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="imu_tf" args="0 0 0.05 0 0 0 $(arg base_frame) imu_link" />
+
+    <!-- MRPT RBPF SLAM Node -->
+    <node pkg="mrpt_rbpf_slam" type="mrpt_rbpf_slam" name="mrpt_rbpf_slam" output="screen" respawn="true">
+
+        <!-- MRPT config file (teknofest için optimize) -->
+        <param name="ini_filename" value="$(find teknofest_ws)/config/teknofest_slam.ini"/>
+
+        <!-- Frame configurations -->
+        <param name="global_frame_id" value="$(arg map_frame)"/>
+        <param name="odom_frame_id" value="$(arg odom_frame)"/>
+        <param name="base_frame_id" value="$(arg base_frame)"/>
+
+        <!-- Sensor topics -->
+        <param name="sensor_source" value="$(arg scan_topic)"/>
+        <param name="use_imu" value="true"/>
+        <param name="imu_topic" value="$(arg imu_topic)"/>
+        <param name="use_direct_odom" value="true"/>
+        <param name="odom_topic" value="$(arg odom_topic)"/>
+
+        <!-- Enhanced parameters from my_robot config -->
+        <param name="update_loop_frequency" value="15"/>
+        <!-- 15Hz for better performance -->
+        <param name="max_linear_vel" value="2.5"/>
+        <!-- TEKNOFEST max speed -->
+        <param name="max_angular_vel" value="1.2"/>
+        <!-- TEKNOFEST max rotation -->
+        <param name="max_linear_jump" value="0.5"/>
+        <!-- Motion validation -->
+        <param name="max_angular_jump" value="0.5"/>
+        <!-- Motion validation -->
+
+        <!-- Load YAML parameters -->
+        <rosparam command="load" file="$(find teknofest_ws)/config/teknofest_slam.yaml" />
+    </node>
+
+    <!-- TEKNOFEST SLAM Integration Node -->
+    <node pkg="teknofest_ws" type="mrpt_slam_integration.py" name="mrpt_slam_integration" output="screen" respawn="false">
+        <param name="scan_topic" value="$(arg scan_topic)"/>
+        <param name="imu_topic" value="$(arg imu_topic)"/>
+        <param name="odom_topic" value="$(arg odom_topic)"/>
+        <param name="global_frame_id" value="$(arg map_frame)"/>
+        <param name="odom_frame_id" value="$(arg odom_frame)"/>
+        <param name="base_frame_id" value="$(arg base_frame)"/>
+    </node>
+
+    <!-- RViz for visualization (optional) -->
+    <node pkg="rviz" type="rviz" name="rviz_slam" output="screen" args="-d $(find teknofest_ws)/config/teknofest_slam.rviz" if="$(eval arg('launch_rviz') if arg('launch_rviz') is defined else false)" />
+
+    <!-- Map server for map saving (runs periodically) -->
+    <node pkg="map_server" type="map_saver" name="periodic_map_saver" args="-f $(find teknofest_ws)/maps/teknofest_map_$(eval int(time.time()))" if="$(eval arg('save_maps') if arg('save_maps') is defined else false)" />
+
+</launch>

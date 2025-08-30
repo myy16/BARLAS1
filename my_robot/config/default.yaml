@@ -1,0 +1,87 @@
+# ROS loop update frequency - YDLidar X4 Pro için optimize
+update_loop_frequency: 10 # Hz (100'den 10'a düşürdük - daha stabil performans)
+
+# Absolute path to the folder where to save *.simplemap
+# Güvenli bir konum kullanıyoruz
+simplemap_save_folder: ~/slam_maps/
+
+# Motion Model Configuration
+# Robotunuzun büyük boyutu (122cm x 119cm) için ayarlandı
+motion_model:
+  type: "thrun" # Parçacık filtresi için daha uygun
+  
+  gaussian_motion_model_options:
+    # Büyük robot için artan noise parametreleri
+    a1: 0.05    # Rotasyonel hareket -> rotasyonel hata
+    a2: 0.08    # Translasyonel hareket -> rotasyonel hata  
+    a3: 0.02    # Translasyonel hareket -> translasyonel hata
+    a4: 0.12    # Rotasyonel hareket -> translasyonel hata
+    minStdXY:  0.01   # Minimum standart sapma XY (1cm)
+    minStdPHI: 0.02   # Minimum standart sapma açısal (0.02 rad ≈ 1.15°)
+  
+  thrun_motion_model_options:
+    particle_count: 200        # Parçacık sayısı artırıldı (daha doğru lokalizasyon)
+    alfa1_rot_rot: 0.15        # Dönme -> dönme hatası (büyük robot için artırıldı)
+    alfa2_rot_trans: 0.12      # Dönme -> hareket hatası
+    alfa3_trans_trans: 0.08    # Hareket -> hareket hatası
+    alfa4_trans_rot: 0.15      # Hareket -> dönme hatası
+    additional_std_XY: 0.05    # Ek XY standart sapması (5cm)
+    additional_std_phi: 0.05   # Ek açısal standart sapma (≈ 2.86°)
+
+# MRPT Visualization options - görselleştirme için
+mrpt_visualization_options:
+  show_window: true           # MRPT penceresi açık (debugging için)
+  camera_follow_robot: true   # Kamera robotu takip etsin
+  window_update_delay: 100    # [ms] - daha smooth görüntü için
+  width: 800                  # [pix] - daha büyük pencere
+  height: 600                 # [pix]
+
+# Particle Filter Specific Options
+particle_filter_options:
+  adaptiveSampleSize: false   # Sabit parçacık sayısı
+  sampleSize: 200            # Parçacık sayısı (motion_model ile tutarlı)
+  pfAuxFilterOptimal_MaximumSearchSamples: 50
+  
+# Grid Map Options - YDLidar X4 Pro için optimize
+occupancy_grid_options:
+  resolution: 0.05           # 5cm çözünürlük (YDLidar için uygun)
+  size_x: 100.0             # 100m x 100m harita boyutu
+  size_y: 100.0
+  insertionOpts:
+    mapAltitude: 0.0        # Harita yüksekliği (2D SLAM için 0)
+    maxDistanceInsertion: 10.0  # Max 12m mesafeye kadar veri kullan
+    maxOccupancyUpdateCertainty: 0.8
+    considerInvalidRangesAsFreeSpace: true
+    minLaserScanNoiseStd: 0.001
+
+# Laser Scanner Specific Settings
+laser_scan_options:
+  horizontalTolerance: 0.05   # Horizontal tolerans (rad)
+  maxRange: 10.0              # YDLidar X4 Pro max menzil
+  minRange: 0.15              # Minimum geçerli mesafe
+  
+# Encoder Odometry Integration
+odometry_options:
+  use_odometry: true          # Encoder odometry aktif
+  odom_topic: "/odom"         # Encoder topic
+  process_rate: 50            # Odometry işlem hızı (Hz)
+  
+  # Odometry noise parameters (encoder karakteristiğine göre)
+  odom_noise_linear: 0.02     # Linear noise (2cm standart sapma)
+  odom_noise_angular: 0.01    # Angular noise (0.01 rad ≈ 0.57° standart sapma)
+  
+  # Validation thresholds
+  max_linear_velocity: 2.0    # Max linear vel (m/s)
+  max_angular_velocity: 1.5   # Max angular vel (rad/s)
+  max_linear_jump: 0.5        # Max linear jump between readings
+  max_angular_jump: 0.5       # Max angular jump between readings
+
+# IMU Integration (gelecekte kullanım için)
+imu_options:
+  use_imu: false              # Şimdilik kapalı, sonra açacağız
+  imu_topic: "/imu"
+  process_rate: 100           # IMU işlem hızı (Hz)
+  
+  # IMU noise parameters (when enabled)
+  angular_velocity_noise: 0.01  # Gyroscope noise
+  linear_acceleration_noise: 0.1 # Accelerometer noise

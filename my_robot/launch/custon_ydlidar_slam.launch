@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Custom RBPF SLAM Launch for YDLidar X4 Pro Setup -->
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find mrpt_rbpf_slam)/config/rosconsole.config"/>
+  
+  <!-- SLAM Node -->
+  <node pkg="mrpt_rbpf_slam" type="mrpt_rbpf_slam" name="mrpt_rbpf_slam" output="screen">
+    <!-- Configuration file -->
+    <param name="ini_filename" value="$(find mrpt_rbpf_slam)/tutorial/grid_slam_demo.ini"/>
+    
+    <!-- Frame IDs -->
+    <param name="odom_frame_id" value="odom"/>
+    <param name="global_frame_id" value="map"/>
+    <param name="base_frame_id" value="base_link"/>
+    
+    <!-- Sensor topics -->
+    <param name="sensor_source" value="/scan"/>
+    <param name="imu_topic" value="/imu"/>
+    <param name="odom_topic" value="/odom"/>
+    
+    <!-- SLAM Parameters -->
+    <rosparam command="load" file="$(find mrpt_rbpf_slam)/config/default.yaml" />
+    
+    <!-- Enhanced parameters -->
+    <param name="publish_tf" value="true"/>
+    <param name="debug" value="false"/>
+    <param name="update_sensor_pose" value="true"/>
+    
+    <!-- Robot-specific parameters -->
+    <param name="robot_width" value="1.195"/>  <!-- 119.5 cm -->
+    <param name="robot_length" value="1.225"/> <!-- 122.5 cm -->
+    
+    <!-- IMU Integration (initially disabled) -->
+    <param name="use_imu" value="false"/>
+    <param name="imu_angular_vel_noise" value="0.01"/>
+    <param name="imu_linear_acc_noise" value="0.1"/>
+    
+    <!-- Enhanced Encoder/Odometry Integration -->
+    <param name="use_direct_odom" value="true"/>
+    <param name="max_linear_vel" value="2.0"/>      <!-- Max 2 m/s -->
+    <param name="max_angular_vel" value="1.5"/>     <!-- Max 1.5 rad/s -->
+    <param name="max_linear_jump" value="0.5"/>     <!-- Max 50cm jump -->
+    <param name="max_angular_jump" value="0.5"/>    <!-- Max 0.5 rad jump -->
+    
+    <!-- Update frequency for large robot -->
+    <param name="update_loop_frequency" value="10"/> <!-- 10 Hz -->
+  </node>
+
+  <!-- Static transform: base_link to lidar_link -->
+  <!-- DEĞER GİRİLMESİ GEREKİYOR: x y z yaw pitch roll -->
+  <node pkg="tf" type="static_transform_publisher" name="base_to_lidar"
+        args="0.0 0.0 0.0 0 0 0 base_link lidar_link 100" />
+
+  <!-- Static transform: base_link to imu_link -->
+  <!-- DEĞER GİRİLMESİ GEREKİYOR: IMU pozisyonuna göre -->
+  <node pkg="tf" type="static_transform_publisher" name="base_to_imu"
+        args="0.0 0.0 0.0 0 0 0 base_link imu_link 100" />
+
+  <!-- Robot State Publisher (opsiyonel - URDF kullanıyorsanız) -->
+  <!-- <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/> -->
+
+  <!-- RViz for visualization -->
+  <node pkg="rviz" type="rviz" name="rviz_slam" output="screen" 
+        args="-d $(find mrpt_rbpf_slam)/rviz/rviz_conf.rviz" />
+
+</launch>

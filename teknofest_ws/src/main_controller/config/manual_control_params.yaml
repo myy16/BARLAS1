@@ -1,0 +1,79 @@
+# TEKNOFEST Manuel Kontrol Parametreleri
+
+# Arduino bağlantısı
+arduino:
+  port: "COM3"
+  baudrate: 9600
+  timeout: 1.0
+  reconnect_attempts: 3
+
+# Motor kontrolü
+motor:
+  max_speed: 255
+  acceleration: 50
+  deceleration: 100
+  turn_speed_reduction: 0.7
+
+# Pan-tilt servolar
+pan_tilt:
+  pan_min_angle: 0
+  pan_max_angle: 180
+  tilt_min_angle: 0
+  tilt_max_angle: 180
+  step_size: 10
+  servo_delay: 0.1
+
+# Joystick ayarları
+joystick:
+  deadzone: 0.1
+  sensitivity: 1.0
+  invert_y_axis: false
+  button_mapping:
+    emergency_stop: 0    # A button
+    headlight: 1         # B button
+    brake: 2             # X button
+    buzzer: 3            # Y button
+    led_mode: 4          # LB button
+
+# Klavye ayarları
+keyboard:
+  repeat_rate: 20      # Hz
+  key_mapping:
+    forward: "w"
+    backward: "s"
+    left: "a"
+    right: "d"
+    stop: "space"
+    pan_left: "q"
+    pan_right: "e"
+    tilt_up: "r"
+    tilt_down: "f"
+    headlight: "h"
+    buzzer: "b"
+    brake: "n"
+    led_mode: "l"
+
+# Güvenlik ayarları
+safety:
+  battery_warning_voltage: 7.0
+  battery_critical_voltage: 6.5
+  max_operation_time: 900  # 15 dakika (saniye)
+  emergency_stop_enabled: true
+  auto_brake_on_disconnect: true
+
+# Debug ve logging
+debug:
+  enable_console_output: true
+  log_sensor_data: true
+  log_commands: true
+  sensor_update_rate: 1.0  # Hz
+
+# ROS topic'leri
+topics:
+  cmd_vel: "/cmd_vel"
+  joy: "/joy"
+  arduino_cmd: "/arduino_cmd"
+  manual_cmd: "/manual_cmd"
+  status: "/manual_control_status"
+  battery: "/battery_voltage"
+  sensors: "/arduino_sensors"
